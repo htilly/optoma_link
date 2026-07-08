@@ -104,7 +104,8 @@
         "Game": "12", "WCG": "42", "ISF Day": "14", "ISF Night": "15",
         "ISF 3D": "17", "Vivid": "16", "2D High Speed": "18",
         "Blending": "19", "Sport": "20", "HDR": "21", "HDR10+": "43",
-        "HLG": "25", "ISF Day HDR": "47", "ISF Night HDR": "48"
+        "HLG": "25", "ISF Day HDR": "47", "ISF Night HDR": "48",
+        "Filmmaker Mode": "54"
       },
       "read": ["123", "1"],
       "read_options": {
@@ -116,7 +117,7 @@
         "19": "Blending", "20": "Sport", "21": "HDR", "25": "HLG",
         "41": "AI-PQ", "42": "WCG", "44": "Golf Sim.",
         "45": "Dolby Vision Bright", "46": "Dolby Vision Dark",
-        "47": "Dolby Vision Vivid"
+        "47": "Dolby Vision Vivid", "52": "Filmmaker Mode"
       },
       "conflicts": {
         "3D": "3D",
