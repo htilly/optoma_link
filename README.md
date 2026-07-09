@@ -24,6 +24,16 @@ Control **Optoma projectors** from [Home Assistant](https://www.home-assistant.i
 - Adjustable **poll interval**, and an **RS232 password** field for units with serial security enabled.
 - Two services: `optoma_link.send_command` (raw passthrough) and `optoma_link.set_test_pattern`.
 
+## What you can do with it
+
+Optoma Link exposes the projector as first-class Home Assistant entities, so it can join scenes, scripts, and automations like any other device. A few examples:
+
+- **Whole-room "cinema" control.** Power the projector on and off alongside the AV receiver, screen, and media player from a single script or dashboard button.
+- **React to the projector turning on.** Close the blinds and dim the lights when the **Status** sensor moves to *Warming up* / *On*. This transition is *pushed* by the projector, so the automation fires promptly rather than waiting for the next poll.
+- **Boost the light source for 3D.** When you switch to 3D **from Home Assistant**, set **Light Source Power** to 100% to make up for the dimming from active-shutter glasses. (Trigger it from Home Assistant, not the remote: the projector doesn't report picture-mode changes back, so Home Assistant only knows the mode changed when *it* made the change.)
+- **Switch inputs programmatically.** Select HDMI 1/2/3 from an automation — e.g. flip to a console's input when it wakes, or to a signage source overnight.
+- **Freeze the image.** Hold the current frame with the **Image Freeze** switch, handy for pausing on a slide. Note the projector *clears* the freeze when the input changes, so it can't be used to mask a source switch (you can't freeze HDMI 1, change to HDMI 2, then unfreeze).
+
 ## Supported projectors
 
 | Model profile | `model_id` | Verified on hardware |
