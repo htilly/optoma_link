@@ -8,7 +8,6 @@ transport + profile a config entry resolved to into a single
 from __future__ import annotations
 
 import logging
-from datetime import timedelta
 
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
@@ -20,7 +19,7 @@ from homeassistant.core import (
     SupportsResponse,
     callback,
 )
-from homeassistant.exceptions import HomeAssistantError
+from homeassistant.exceptions import ConfigEntryNotReady, HomeAssistantError
 from homeassistant.helpers import config_validation as cv, device_registry as dr
 
 from .const import (
@@ -98,7 +97,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     coordinator = OptomaUpdateCoordinator(hass, transport, profile, scan_interval)
 
-    await coordinator.async_config_entry_first_refresh()
+    # Read the device-registry details (firmware, MAC, serial) once, up front.
+    # This also serves as the setup-time reachability check. The recurring poll
+    # only covers entity-backed reads -- and only for entities that are enabled,
+    # so it must run *after* the platforms are set up (contexts registered).
+    try:
+        await coordinator.async_fetch_device_details()
+    except OptomaConnectionError as err:
+        raise ConfigEntryNotReady(str(err)) from err
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
 
@@ -165,6 +171,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     entry.async_on_unload(coordinator.async_add_listener(_refresh_device_details))
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    # First poll now that entities exist: their registered contexts tell the
+    # coordinator exactly which reads back an enabled entity.
+    await coordinator.async_refresh()
+
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
 
     _async_register_services(hass)
@@ -176,7 +186,7 @@ async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> Non
     """Apply new options (poll interval) without requiring a reload."""
     coordinator: OptomaUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
     new_interval = entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
-    coordinator.update_interval = timedelta(seconds=new_interval)
+    coordinator.set_scan_interval(new_interval)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

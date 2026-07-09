@@ -38,6 +38,12 @@ DEFAULT_NAME = "Optoma Projector"
 DEFAULT_SCAN_INTERVAL = 30
 MIN_SCAN_INTERVAL = 5
 MAX_SCAN_INTERVAL = 300
+# While the projector is off/standby nothing the poll reads can change, so the
+# coordinator relaxes to at least this interval (or the configured one, if
+# longer). The projector's own INFO push on power-up flips polling back to the
+# configured (fast) interval immediately, so the slow cadence never delays a
+# wake-up being noticed.
+STANDBY_SCAN_INTERVAL = 60
 
 # 9600 8-N-1 is the de-facto standard across Optoma's RS232 documentation;
 # none of the three reference docs behind the bundled profiles state a

@@ -23,6 +23,7 @@ from .const import (
     AUTO_SEND_OPERATIONAL,
     DOMAIN,
     RESPONSE_OK_PREFIX,
+    STANDBY_SCAN_INTERVAL,
 )
 from .transport import OptomaCommandError, OptomaConnectionError, OptomaTransport
 
@@ -76,8 +77,17 @@ class OptomaUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.transport = transport
         self.profile = profile
         self.data = {}
+        # The user-configured interval; the *effective* update_interval relaxes
+        # to STANDBY_SCAN_INTERVAL while the projector is off (see
+        # _apply_dynamic_interval) and snaps back on a power-up push/command.
+        self._scan_interval = scan_interval
         self._seed_write_only_defaults()
         transport.set_status_callback(self._handle_status_line)
+
+    def set_scan_interval(self, seconds: int) -> None:
+        """Apply a new user-configured poll interval (from the options flow)."""
+        self._scan_interval = seconds
+        self._apply_dynamic_interval(self.data or {})
 
     def _seed_write_only_defaults(self) -> None:
         """Give write-only controls a sensible starting value.
@@ -115,75 +125,196 @@ class OptomaUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if not updates:
             return
         self.data = {**(self.data or {}), **updates}
+        # Re-arm the poll timer *before* publishing: async_set_updated_data
+        # reschedules the next refresh using the current update_interval, so a
+        # power-up push flips polling back to the fast cadence immediately.
+        self._apply_dynamic_interval(self.data)
         self.async_set_updated_data(self.data)
 
     # --- polling ------------------------------------------------------
 
     def _iter_readable_entities(self):
-        """Yield (entity_type, spec) for every profile entity with a read command."""
-        for spec in self.profile.get("switches", []):
-            if spec.get("read"):
-                yield "switch", spec
-        for spec in self.profile.get("selects", []):
-            if spec.get("read"):
-                yield "select", spec
-        for spec in self.profile.get("numbers", []):
-            if spec.get("read"):
-                yield "number", spec
-        for spec in self.profile.get("binary_sensors", []):
-            if spec.get("read"):
-                yield "binary_sensor", spec
-        for spec in self.profile.get("sensors", []):
-            if spec.get("read"):
-                yield "sensor", spec
-        # device_info reads populate the device registry (firmware, MAC, ...)
-        # without creating entities; parse them like sensors.
+        """Yield (entity_type, spec) for every entity-backed read in the profile."""
+        sections = (
+            ("switch", "switches"),
+            ("select", "selects"),
+            ("number", "numbers"),
+            ("binary_sensor", "binary_sensors"),
+            ("sensor", "sensors"),
+        )
+        for entity_type, section in sections:
+            for spec in self.profile.get(section, []):
+                if spec.get("read"):
+                    yield entity_type, spec
+
+    def _iter_device_detail_specs(self):
+        """Yield the entity-less reads that populate the device registry.
+
+        These are the profile's ``device_info`` entries (firmware, MAC, ...)
+        plus the top-level ``serial_read``, which the device card needs even
+        when the Serial Number sensor entity is disabled (its default).
+        """
+        seen = set()
         for spec in self.profile.get("device_info", []):
             if spec.get("read"):
-                yield "sensor", spec
+                seen.add(spec["key"])
+                yield spec
+        serial_read = self.profile.get("serial_read")
+        if serial_read and "serial_number" not in seen:
+            # Reuse the serial sensor's validation pattern if the profile has one.
+            pattern = next(
+                (
+                    s.get("pattern")
+                    for s in self.profile.get("sensors", [])
+                    if s.get("key") == "serial_number"
+                ),
+                None,
+            )
+            yield {"key": "serial_number", "read": serial_read, "pattern": pattern}
+
+    async def async_fetch_device_details(self) -> None:
+        """Read the device-registry values once, at setup.
+
+        Immutable/semi-static values (firmware, MAC, serial) don't belong on
+        the recurring poll timer; they are read here at startup instead. Also
+        doubles as the setup-time connectivity check: raises
+        ``OptomaConnectionError`` (for ConfigEntryNotReady) if the projector
+        is unreachable. Values the projector answers with a placeholder for
+        (or rejects, e.g. in standby) are retried from the poll loop until a
+        real value arrives, then never asked for again.
+        """
+        await self.transport.async_connect()
+        updates = await self._async_read_missing_device_details(dict(self.data or {}))
+        if updates:
+            self.data = {**(self.data or {}), **updates}
+
+    def _missing_device_detail_specs(self, data: dict[str, Any]):
+        """Device-detail specs we still lack a real (non-placeholder) value for."""
+        for spec in self._iter_device_detail_specs():
+            value = data.get(spec["key"])
+            text = str(value).strip() if value is not None else ""
+            if not text or text == "0":
+                yield spec
+
+    async def _async_read_missing_device_details(
+        self, data: dict[str, Any]
+    ) -> dict[str, Any]:
+        updates: dict[str, Any] = {}
+        for spec in self._missing_device_detail_specs(data):
+            try:
+                value = await self._async_read_spec("sensor", spec)
+            except OptomaCommandError as err:
+                _LOGGER.debug(
+                    "Device detail '%s' not supported: %s", spec["key"], err
+                )
+                continue
+            if value is not None:
+                updates[spec["key"]] = value
+        return updates
+
+    async def _async_read_spec(self, entity_type: str, spec: dict[str, Any]) -> Any:
+        """Send one spec's read and return the parsed value, or None if the
+        reply fails the spec's shape validation.
+
+        Raises ``OptomaCommandError`` / ``OptomaConnectionError`` unchanged.
+        """
+        code, sub_value = spec["read"]
+        reply = await self.transport.async_send(code, sub_value)
+        raw = _strip_ok(reply)
+        # Reject values that don't match the field's expected shape. During
+        # signal/power transitions the projector can briefly answer with the
+        # wrong field (a serial that looks like "2160p"); keep the last good
+        # value rather than showing garbage.
+        pattern = spec.get("pattern")
+        if pattern is not None and re.fullmatch(pattern, raw) is None:
+            _LOGGER.debug(
+                "Read '%s' returned %r, which fails validation %s; keeping previous value",
+                spec["key"],
+                raw,
+                pattern,
+            )
+            return None
+        return self._parse_value(entity_type, spec, raw)
 
     async def _async_update_data(self) -> dict[str, Any]:
         data: dict[str, Any] = dict(self.data or {})
+        # Contexts are registered by entities actually added to Home Assistant
+        # (see OptomaEntity), so this is exactly the set of *enabled* entities.
+        # Disabled entities' reads are never sent -- which also means the IP
+        # read (87/3), whose sensor is disabled by default, only goes on the
+        # wire if the user explicitly enables that sensor. (On the UHZ68LV
+        # firmware C22/M12/S32 that read intermittently crashes the projector's
+        # ProjectorService -- see the README's known issues.)
+        active_keys = set(self.async_contexts())
+        attempted = 0
         any_success = False
         last_error: Exception | None = None
 
         for entity_type, spec in self._iter_readable_entities():
-            code, sub_value = spec["read"]
             key = spec["key"]
+            if key not in active_keys:
+                continue
+            attempted += 1
             try:
-                reply = await self.transport.async_send(code, sub_value)
+                value = await self._async_read_spec(entity_type, spec)
             except OptomaCommandError as err:
                 _LOGGER.debug("Read '%s' not supported by projector: %s", key, err)
                 continue
             except OptomaConnectionError as err:
                 last_error = err
                 continue
-
             any_success = True
-            raw = _strip_ok(reply)
-            # Reject values that don't match the field's expected shape. During
-            # signal/power transitions the projector can briefly answer with the
-            # wrong field (a serial that looks like "2160p"); keep the last good
-            # value rather than showing garbage.
-            pattern = spec.get("pattern")
-            if pattern is not None and re.fullmatch(pattern, raw) is None:
-                _LOGGER.debug(
-                    "Read '%s' returned %r, which fails validation %s; keeping previous value",
-                    key,
-                    raw,
-                    pattern,
-                )
-                continue
-            data[key] = self._parse_value(entity_type, spec, raw)
+            if value is not None:
+                data[key] = value
 
-        if not any_success:
+        # Retry any device-registry detail the projector hasn't given a real
+        # value for yet (some units answer "0" until fully booted). Once every
+        # detail is in, this adds zero reads to the cycle.
+        try:
+            detail_updates = await self._async_read_missing_device_details(data)
+        except OptomaConnectionError as err:
+            last_error = err
+        else:
+            if detail_updates:
+                any_success = True
+                data.update(detail_updates)
+
+        if attempted and not any_success:
             if last_error is not None:
                 raise UpdateFailed(str(last_error))
             # Connection is alive but the projector rejected every read
             # (typical for some models in standby); keep the cached data.
             _LOGGER.debug("Projector rejected every poll command; keeping cached state")
 
+        self._apply_dynamic_interval(data)
         return data
+
+    def _apply_dynamic_interval(self, data: dict[str, Any]) -> None:
+        """Poll fast while the projector is on, relaxed while it's off.
+
+        Nothing the poll reads can change in standby, so the effective interval
+        stretches to STANDBY_SCAN_INTERVAL (or the configured interval if the
+        user already set it longer). The projector's power-up INFO push and
+        HA-side power commands both come through here, so waking snaps polling
+        back to the configured cadence without waiting out the slow timer.
+        """
+        power_on = data.get("power") is True or data.get("status") in (
+            "on",
+            "warming_up",
+        )
+        seconds = (
+            self._scan_interval
+            if power_on
+            else max(self._scan_interval, STANDBY_SCAN_INTERVAL)
+        )
+        new_interval = timedelta(seconds=seconds)
+        if self.update_interval != new_interval:
+            _LOGGER.debug(
+                "Poll interval -> %ss (projector %s)",
+                seconds,
+                "on" if power_on else "off/standby",
+            )
+            self.update_interval = new_interval
 
     @staticmethod
     def _parse_value(entity_type: str, spec: dict[str, Any], raw: str) -> Any:
@@ -239,6 +370,9 @@ class OptomaUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if spec["key"] == "power":
             updates["status"] = "warming_up" if on else "cooling_down"
         self.data = {**(self.data or {}), **updates}
+        # A power command from HA re-arms the poll cadence right away (fast on
+        # power-on, relaxed on power-off) instead of waiting for the push.
+        self._apply_dynamic_interval(self.data)
         self.async_set_updated_data(self.data)
         if spec.get("refresh_after"):
             self.hass.async_create_task(self._async_delayed_refresh())

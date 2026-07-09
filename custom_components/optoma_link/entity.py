@@ -80,7 +80,11 @@ class OptomaEntity(CoordinatorEntity[OptomaUpdateCoordinator]):
         entry: ConfigEntry,
         spec: dict,
     ) -> None:
-        super().__init__(coordinator)
+        # The entity's key doubles as its coordinator *context*: contexts are
+        # only registered for entities actually added to Home Assistant, so the
+        # coordinator polls exactly the reads that back an *enabled* entity.
+        # Disabling an entity in the UI stops its read on the next cycle.
+        super().__init__(coordinator, context=spec["key"])
         self._entry = entry
         self._spec = spec
         self._key = spec["key"]

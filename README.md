@@ -8,7 +8,7 @@ Control **Optoma projectors** from [Home Assistant](https://www.home-assistant.i
 
 ![Optoma Link projector device page in Home Assistant](images/integration.png)
 
-> **Status: alpha.** The bundled UHZ68LV profile is verified against real hardware. The other profiles are transcribed from Optoma's documentation and have not yet been confirmed on a physical unit. Expect rough edges, and please [open an issue](https://github.com/nerdaxic/optoma_link/issues) if something misbehaves.
+> **Status: beta.** The bundled UHZ68LV profile is verified against real hardware and has been through extended stability testing. The other profiles are transcribed from Optoma's documentation and have not yet been confirmed on a physical unit. Please [open an issue](https://github.com/nerdaxic/optoma_link/issues) if something misbehaves.
 
 ![Entities Optoma Link exposes for a projector](images/screenshot.png)
 
@@ -21,6 +21,7 @@ Control **Optoma projectors** from [Home Assistant](https://www.home-assistant.i
 - Optional **test pattern** step during setup, so you can visually confirm you're talking to the right unit.
 - Entities generated from the active profile: Power, AV/Audio Mute, Input Source, Picture Mode, Aspect Ratio, Brightness, Contrast, Sharpness, 3D controls, Light Source Power, Lamp/Light Source Hours, Temperature, Firmware Version, Serial Number, Resync, and more. The exact set depends on the model.
 - A live **Status** sensor (Off, Warming up, On, Cooling down, Error) driven by the projector's own status pushes, so power transitions and faults (over-temperature, fan lock, and so on) show up immediately instead of at the next poll.
+- **Polls only what you use:** disabled entities are never queried, device details (firmware, MAC, serial) are read once at startup, and polling automatically relaxes while the projector is off and snaps back the moment it wakes.
 - Adjustable **poll interval**, and an **RS232 password** field for units with serial security enabled.
 - Two services: `optoma_link.send_command` (raw passthrough) and `optoma_link.set_test_pattern`.
 
@@ -82,7 +83,13 @@ The **poll interval** can be changed later from the integration's options (defau
 
 ## How updates work (local polling)
 
-Optoma Link talks to the projector over RS232, a simple question-and-answer protocol with no live push. Home Assistant polls the projector on an interval (default 30 seconds, configurable), so a change made on the projector can take up to that long to show up.
+Optoma Link talks to the projector over RS232, a question-and-answer protocol. Home Assistant polls the projector on an interval (default 30 seconds, configurable), so a change made on the projector can take up to that long to show up. The exceptions are power transitions and faults, which the projector *pushes* on its own and therefore appear immediately.
+
+Polling is deliberately economical:
+
+- **Only enabled entities are polled.** Disabling an entity (Settings → Devices → the entity → gear icon → *Enabled* off) removes its query from the cycle entirely. Fewer enabled entities also means a shorter poll cycle, so the values you *do* care about refresh closer to the configured interval.
+- **Device details are read once.** Firmware version, MAC address, and serial number are fetched at startup, not on the timer (retried only until the projector answers with real values).
+- **The interval adapts to power state.** While the projector is off, polling relaxes to at least 60 seconds — nothing it reports can change in standby. The projector's own power-on push (or a power command from Home Assistant) restores the configured interval immediately.
 
 Some controls are **write-only**: the projector accepts a value but offers no command to read it back (for example 3D, 3D Format, and Light Source Power). For these, Home Assistant can only show the last value it sent, which means:
 
@@ -114,6 +121,7 @@ Show or hide the projector's built-in test pattern (if its profile defines one).
 
 ## Known issues
 
+- **UHZ68LV firmware bug: the IP Address query can crash the projector's software.** On UHZ68LV firmware DDP C22 / MCU M12 / Scalar S32, the RS232 query for the projector's own IP address (`~XX87 3`) intermittently (~1 in 20 calls) crashes the projector's internal `ProjectorService` — the projector briefly shows a *"ProjectorService: Central service has been disconnected"* toast and recovers within a second or two. This is a firmware defect, not specific to this integration: any RS232 controller issuing that query can trigger it (reported to Optoma; see [issue #1](https://github.com/nerdaxic/optoma_link/issues/1) for the full investigation). The integration's **IP Address sensor is disabled by default**, and disabled entities are never polled, so a default installation never sends this query. If you enable the IP Address sensor and start seeing the toast, **disable the sensor again** — that stops the query and the crashes with it.
 - **Setup fails while the projector is playing 3D.** The test-pattern step (and some other commands) are refused while the projector is displaying 3D content. Turn off 3D on the projector before running setup, then re-enable it afterwards.
 - **Some picture modes are content-specific.** The projector groups picture modes into SDR, HDR, Dolby Vision, and 3D "universes" and refuses a mode that does not match what is playing (for example, selecting a Dolby Vision mode during HDR10 content). Home Assistant surfaces this as a mode-conflict message.
 - **Write-only controls read Unknown until set.** See [How updates work](#how-updates-work-local-polling) above.
