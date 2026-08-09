@@ -4,8 +4,8 @@
   "manufacturer": "Optoma",
   "display_name": "Optoma UHD60",
   "aliases": ["UHD60"],
-  "verified": false,
-  "source": "Optoma 'RS232 Protocol Function List' (Optoma_RS232_Table_2017_May02.pdf), a shared multi-model command table for Optoma's 2016-2018 DLP projector line, cross-referenced against the UHD60's documented display modes and I/O (1x HDMI 2.0, 1x HDMI 1.4a/MHL, 1x VGA, RS232, RJ45 for 'RS232 by Telnet'). Transcribed from the official PDF; not yet verified against real hardware. Please open a pull request with corrections if you own this model.",
+  "verified": true,
+  "source": "Optoma 'RS232 Protocol Function List' (Optoma_RS232_Table_2017_May02.pdf), a shared multi-model command table for Optoma's 2016-2018 DLP projector line, cross-referenced against the UHD60's documented display modes and I/O (1x HDMI 2.0, 1x HDMI 1.4a/MHL, 1x VGA, RS232, RJ45 for 'RS232 by Telnet'). Verified against real UHD60 hardware (firmware C015) over LAN: Power, Input Source, Picture Mode, Aspect Ratio, Brightness, Contrast, Audio/AV Mute, Firmware Version, Serial Number, and Lamp Hours all confirmed reading and writing correctly. 3D and 3D Format are write-only by design -- Optoma's protocol has no read-back command for either, on any profile in this integration.",
   "detect": {
     "read_code": "151",
     "read_sub": "1",
