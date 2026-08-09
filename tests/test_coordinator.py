@@ -1,9 +1,9 @@
 """Unit tests for coordinator.py's numeric normalization and value parsing.
 
 Covers the zero-padding/sign-character tolerance added for the UHD60
-(release 2.9.3) using values captured verbatim from its debug logs, and
-confirms non-padded replies -- what the other three profiles actually send
--- still resolve on the first, exact-match attempt.
+using values captured verbatim from its debug logs, and confirms
+non-padded replies -- what the other three profiles actually send --
+still resolve on the first, exact-match attempt.
 """
 import pytest
 

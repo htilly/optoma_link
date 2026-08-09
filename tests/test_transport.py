@@ -1,12 +1,12 @@
 """Unit tests for transport.py's console-noise-tolerant reply parsing.
 
 These pin down the failure modes discovered while bringing up the UHD60
-profile (see projectors/uhd60.json's "source" note and the 2.9.1-2.9.6
-release history): its LAN "RS232 by Telnet" bridge echoes a shell-style
-console prompt ahead of replies, in several different shapes. Every case
-here is either a byte sequence captured from a live UHD60 over LAN, or a
-well-formed reply shape from the protocol spec shared by all four bundled
-profiles, to guard against a UHD60-motivated fix corrupting another model.
+profile (see projectors/uhd60.json's "source" note): its LAN "RS232 by
+Telnet" bridge echoes a shell-style console prompt ahead of replies, in
+several different shapes. Every case here is either a byte sequence
+captured from a live UHD60 over LAN, or a well-formed reply shape from the
+protocol spec shared by all four bundled profiles, to guard against a
+UHD60-motivated fix corrupting another model.
 """
 from optoma_link.transport import _strip_console_prompt
 
@@ -48,7 +48,7 @@ def test_single_prompt_prefix():
 
 def test_doubled_prompt_prefix():
     # Seen intermittently -- the console re-prints its prompt twice before
-    # the reply lands. A single-pass prefix-strip (v2.9.1) left a residual
+    # the reply lands. An earlier single-pass prefix-strip left a residual
     # "Optoma_PJ> OK1" behind here.
     assert _strip_console_prompt("Optoma_PJ> Optoma_PJ> OK1") == "OK1"
 
@@ -62,10 +62,10 @@ def test_prompt_ahead_of_pass_ack():
 
 
 def test_noise_with_embedded_newline_before_prompt():
-    # The case a loop of prefix-strips (v2.9.5) still couldn't handle:
-    # something non-whitespace (control/escape bytes from the console
-    # redrawing its prompt) sits before "Optoma_PJ>", so an anchored
-    # ``^\S+>`` strip never matches at position 0 and gives up.
+    # The case a loop of prefix-strips still couldn't handle: something
+    # non-whitespace (control/escape bytes from the console redrawing its
+    # prompt) sits before "Optoma_PJ>", so an anchored ``^\S+>`` strip
+    # never matches at position 0 and gives up.
     assert _strip_console_prompt("  \nOptoma_PJ> OK1") == "OK1"
 
 
@@ -77,3 +77,16 @@ def test_arbitrary_noise_before_prompt():
 
 def test_no_marker_anywhere_returns_input_unchanged():
     assert _strip_console_prompt("totally unparseable nonsense") == "totally unparseable nonsense"
+
+
+# --- Marker search must be word-boundary-anchored, not a bare substring
+# --- search -- otherwise "ok"/"p"/"f" embedded mid-word gets mistaken for
+# --- a real protocol marker. ---
+
+def test_ok_embedded_mid_word_is_not_a_false_match():
+    assert _strip_console_prompt("broken") == "broken"
+
+
+def test_trailing_p_at_end_of_a_word_is_not_a_false_pass_ack():
+    assert _strip_console_prompt("help") == "help"
+    assert _strip_console_prompt("stop") == "stop"

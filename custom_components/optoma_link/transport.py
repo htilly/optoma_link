@@ -61,8 +61,11 @@ _CONNECTION_LOST = object()  # sentinel enqueued when the read loop stops
 # from position 0 -- not reliable, see above), search for a real marker
 # anywhere in the line and keep only from there on. A legitimate reply is
 # always exactly "P"/"F", "Ok" + a value, or "INFO" + a code, so this can't
-# mistake real protocol content elsewhere in the line for prompt noise.
-_MARKER_SEARCH_RE = re.compile(r"ok\S*|info\d+|[pf]\Z", re.IGNORECASE)
+# mistake real protocol content elsewhere in the line for prompt noise --
+# the \b word-boundary anchors matter here, or e.g. the "ok" inside
+# "broken" (or a bare trailing "p"/"f" inside "help"/"stop") would
+# wrongly match as if it were part of a genuine reply.
+_MARKER_SEARCH_RE = re.compile(r"\bok\S*|\binfo\d+|\b[pf]\Z", re.IGNORECASE)
 
 
 def _strip_console_prompt(line: str) -> str:
