@@ -79,13 +79,19 @@
       "icon": "mdi:palette",
       "write_code": "20",
       "options": {
-        "Bright": "2", "Cinema": "3", "Reference": "4", "Game": "12",
-        "User": "5", "3D": "9", "HDR": "21"
+        "Presentation": "1", "Bright": "2", "Cinema": "3", "Reference": "4",
+        "User": "5", "User (3D)": "6", "Film": "11", "Game": "12",
+        "DICOM SIM.": "13", "Vivid": "16", "ISF Day": "14", "ISF Night": "15",
+        "ISF 3D": "17", "2D High Speed": "18", "Blending": "19", "Sport": "20",
+        "HDR": "21", "3D": "9"
       },
       "read": ["123", "1"],
       "read_options": {
-        "2": "Bright", "3": "Cinema", "4": "Reference", "12": "Game",
-        "5": "User", "9": "3D", "21": "HDR"
+        "0": "None", "1": "Presentation", "2": "Bright", "3": "Cinema",
+        "4": "Reference", "5": "User", "6": "User (3D)", "9": "3D",
+        "10": "DICOM SIM.", "11": "Film", "12": "Game", "14": "Vivid",
+        "15": "ISF Day", "16": "ISF Night", "17": "ISF 3D",
+        "18": "2D High Speed", "19": "Blending", "20": "Sport", "21": "HDR"
       }
     },
     {
@@ -93,9 +99,17 @@
       "name": "Aspect Ratio",
       "icon": "mdi:aspect-ratio",
       "write_code": "60",
-      "options": { "4:3": "1", "16:9": "2", "LBX": "5", "Native": "6", "Auto": "7" },
+      "options": {
+        "4:3": "1", "16:9": "2", "16:10": "3", "LBX": "5", "Native": "6",
+        "Auto": "7", "Auto235": "8", "Superwide": "9",
+        "Auto235 (Subtitle)": "11", "Auto 3D": "12"
+      },
       "read": ["127", "1"],
-      "read_options": { "1": "4:3", "2": "16:9", "5": "LBX", "6": "Native", "7": "Auto" }
+      "read_options": {
+        "1": "4:3", "2": "16:9", "3": "16:10", "5": "LBX", "6": "Native",
+        "7": "Auto", "8": "Auto235", "9": "Superwide",
+        "11": "Auto235 (Subtitle)", "12": "Auto 3D"
+      }
     },
     {
       "key": "three_d_format",
