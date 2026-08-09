@@ -53,7 +53,15 @@ The integration itself is model-agnostic: every entity and command comes from a 
 
 ## Installation
 
-### HACS (recommended)
+### One-click (recommended)
+
+[![Open your Home Assistant instance and add this repository to HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=nerdaxic&repository=optoma_link&category=integration)
+
+Click, then **Download** in HACS and **restart Home Assistant**. Once it's back up, click the second badge to jump straight into setup (it won't work until after the restart, since Home Assistant needs to have loaded the integration first):
+
+[![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=optoma_link)
+
+### HACS (manual steps)
 
 1. In HACS, open the **⋮** menu (top right) → **Custom repositories**.
 2. Add repository `https://github.com/nerdaxic/optoma_link` with type **Integration**.
