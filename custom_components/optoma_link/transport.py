@@ -47,34 +47,28 @@ _TERMINATOR_BYTES = TERMINATOR.encode("ascii")
 _CONNECTION_LOST = object()  # sentinel enqueued when the read loop stops
 
 # Some projectors' LAN "RS232 by Telnet" bridge is really a shell-style
-# console: it echoes a prompt like "Optoma_PJ> " immediately before the
-# actual reply, on the same line (seen on the UHD60). Left in place, that
-# prefix defeats the P/F/Ok markers this protocol relies on -- write
-# failures go undetected (a prefixed "F" no longer matches RESPONSE_FAIL),
-# and reads come back as raw garbage, so read-backed entities show Unknown.
-# A real reply never starts this way, so stripping is safe: only touch
-# lines that don't already start with one of the protocol's own markers.
-_PROMPT_PREFIX_RE = re.compile(r"^\S+>\s*")
-_REPLY_MARKER_RE = re.compile(r"^(?:ok|info|[pf])", re.IGNORECASE)
+# console: it echoes a prompt like "Optoma_PJ> " ahead of the actual reply,
+# on the same line (seen on the UHD60) -- sometimes doubled
+# ("Optoma_PJ> Optoma_PJ> OK1"), sometimes with stray control/escape bytes
+# or an embedded line break in front of it (from the console redrawing its
+# prompt) that a plain ``.strip()`` doesn't remove. Left in place, any of
+# this defeats the P/F/Ok markers this protocol relies on -- write failures
+# go undetected (a prefixed "F" no longer matches RESPONSE_FAIL), and reads
+# come back as raw garbage, so read-backed entities show Unknown, or a
+# switch silently reads as off/False no matter the real state.
+#
+# Rather than stripping a prefix (which assumes the noise is contiguous
+# from position 0 -- not reliable, see above), search for a real marker
+# anywhere in the line and keep only from there on. A legitimate reply is
+# always exactly "P"/"F", "Ok" + a value, or "INFO" + a code, so this can't
+# mistake real protocol content elsewhere in the line for prompt noise.
+_MARKER_SEARCH_RE = re.compile(r"ok\S*|info\d+|[pf]\Z", re.IGNORECASE)
 
 
 def _strip_console_prompt(line: str) -> str:
-    """Strip leading shell-style prompt(s) some projectors echo before replies.
-
-    The echo isn't always a single prefix -- seen on the UHD60 with the
-    console re-printing its prompt twice ("Optoma_PJ> Optoma_PJ> OK1") ahead
-    of a reply, apparently when it had nothing else to print for a beat.
-    Stripping only once left a residual "Optoma_PJ> OK1" that still didn't
-    parse, silently reading as e.g. an off/False power state even while the
-    projector was on. Keep stripping until a real marker surfaces, or until a
-    strip attempt makes no further progress (unparseable garbage).
-    """
-    while not _REPLY_MARKER_RE.match(line):
-        stripped = _PROMPT_PREFIX_RE.sub("", line, count=1)
-        if stripped == line:
-            break
-        line = stripped
-    return line
+    """Keep only the real protocol reply, discarding any console noise before it."""
+    match = _MARKER_SEARCH_RE.search(line)
+    return line[match.start():] if match else line
 
 
 class OptomaCommandError(Exception):
