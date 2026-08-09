@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 
@@ -44,6 +45,24 @@ _LOGGER = logging.getLogger(__name__)
 
 _TERMINATOR_BYTES = TERMINATOR.encode("ascii")
 _CONNECTION_LOST = object()  # sentinel enqueued when the read loop stops
+
+# Some projectors' LAN "RS232 by Telnet" bridge is really a shell-style
+# console: it echoes a prompt like "Optoma_PJ> " immediately before the
+# actual reply, on the same line (seen on the UHD60). Left in place, that
+# prefix defeats the P/F/Ok markers this protocol relies on -- write
+# failures go undetected (a prefixed "F" no longer matches RESPONSE_FAIL),
+# and reads come back as raw garbage, so read-backed entities show Unknown.
+# A real reply never starts this way, so stripping is safe: only touch
+# lines that don't already start with one of the protocol's own markers.
+_PROMPT_PREFIX_RE = re.compile(r"^\S+>\s*")
+_REPLY_MARKER_RE = re.compile(r"^(?:ok|info|[pf])", re.IGNORECASE)
+
+
+def _strip_console_prompt(line: str) -> str:
+    """Strip a leading shell-style prompt some projectors echo before replies."""
+    if _REPLY_MARKER_RE.match(line):
+        return line
+    return _PROMPT_PREFIX_RE.sub("", line, count=1)
 
 
 class OptomaCommandError(Exception):
@@ -147,6 +166,7 @@ class OptomaTransport(ABC):
             while True:
                 raw = await self._async_read_until_terminator()
                 line = raw.decode("ascii", errors="replace").strip()
+                line = _strip_console_prompt(line)
                 if not line:
                     continue
                 if line.upper().startswith("INFO"):
