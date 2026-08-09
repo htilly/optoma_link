@@ -59,10 +59,22 @@ _REPLY_MARKER_RE = re.compile(r"^(?:ok|info|[pf])", re.IGNORECASE)
 
 
 def _strip_console_prompt(line: str) -> str:
-    """Strip a leading shell-style prompt some projectors echo before replies."""
-    if _REPLY_MARKER_RE.match(line):
-        return line
-    return _PROMPT_PREFIX_RE.sub("", line, count=1)
+    """Strip leading shell-style prompt(s) some projectors echo before replies.
+
+    The echo isn't always a single prefix -- seen on the UHD60 with the
+    console re-printing its prompt twice ("Optoma_PJ> Optoma_PJ> OK1") ahead
+    of a reply, apparently when it had nothing else to print for a beat.
+    Stripping only once left a residual "Optoma_PJ> OK1" that still didn't
+    parse, silently reading as e.g. an off/False power state even while the
+    projector was on. Keep stripping until a real marker surfaces, or until a
+    strip attempt makes no further progress (unparseable garbage).
+    """
+    while not _REPLY_MARKER_RE.match(line):
+        stripped = _PROMPT_PREFIX_RE.sub("", line, count=1)
+        if stripped == line:
+            break
+        line = stripped
+    return line
 
 
 class OptomaCommandError(Exception):
