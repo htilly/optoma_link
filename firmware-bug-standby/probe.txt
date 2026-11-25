@@ -1,0 +1,77 @@
+[   0.02s] === Round 1/10: fresh connection, first query = power status ===
+[   0.02s] TCP connect 172.16.205.161:23
+[   1.03s] TX '~00124 1'       (power status (first after connect))
+[   1.04s]    RX 'OK0'
+[   1.04s] TX '~00124 1'       (power status (second))
+[   1.05s]    RX 'OK0'
+[   1.05s] TCP closed
+[   4.05s] === Round 2/10: fresh connection, first query = power status ===
+[   4.05s] TCP connect 172.16.205.161:23
+[   5.06s] TX '~00124 1'       (power status (first after connect))
+[   7.07s]    RX 'OK0'
+[   7.07s] TX '~00124 1'       (power status (second))
+[   7.08s]    RX 'OK0'
+[   7.08s] TCP closed
+[  10.08s] === Round 3/10: fresh connection, first query = power status ===
+[  10.08s] TCP connect 172.16.205.161:23
+[  11.08s] TX '~00124 1'       (power status (first after connect))
+[  13.10s]    RX 'OK0'
+[  13.10s] TX '~00124 1'       (power status (second))
+[  13.11s]    RX 'OK0'
+[  13.11s] TCP closed
+[  16.11s] === Round 4/10: fresh connection, first query = power status ===
+[  16.11s] TCP connect 172.16.205.161:23
+[  17.12s] TX '~00124 1'       (power status (first after connect))
+[  19.13s]    RX 'OK0'
+[  19.13s] TX '~00124 1'       (power status (second))
+[  19.14s]    RX 'OK0'
+[  19.14s] TCP closed
+[  22.14s] === Round 5/10: fresh connection, first query = power status ===
+[  22.14s] TCP connect 172.16.205.161:23
+[  23.16s] TX '~00124 1'       (power status (first after connect))
+[  25.16s]    RX 'OK0'
+[  25.16s] TX '~00124 1'       (power status (second))
+[  25.17s]    RX 'OK0'
+[  25.17s] TCP closed
+[  28.17s] === Round 6/10: fresh connection, first query = power status ===
+[  28.17s] TCP connect 172.16.205.161:23
+[  29.18s] TX '~00124 1'       (power status (first after connect))
+[  31.18s]    RX 'OK0'
+[  31.18s] TX '~00124 1'       (power status (second))
+[  31.19s]    RX 'OK0'
+[  31.19s] TCP closed
+[  34.20s] === Round 7/10: fresh connection, first query = power status ===
+[  34.20s] TCP connect 172.16.205.161:23
+[  35.20s] TX '~00124 1'       (power status (first after connect))
+[  37.21s]    RX 'OK0'
+[  37.21s] TX '~00124 1'       (power status (second))
+[  37.22s]    RX 'OK0'
+[  37.22s] TCP closed
+[  40.23s] === Round 8/10: fresh connection, first query = power status ===
+[  40.23s] TCP connect 172.16.205.161:23
+[  41.23s] TX '~00124 1'       (power status (first after connect))
+[  43.24s]    RX 'OK0'
+[  43.24s] TX '~00124 1'       (power status (second))
+[  43.25s]    RX 'OK0'
+[  43.25s] TCP closed
+[  46.25s] === Round 9/10: fresh connection, first query = power status ===
+[  46.25s] TCP connect 172.16.205.161:23
+[  47.26s] TX '~00124 1'       (power status (first after connect))
+[  49.27s]    RX 'OK0'
+[  49.27s] TX '~00124 1'       (power status (second))
+[  49.28s]    RX 'OK0'
+[  49.28s] TCP closed
+[  52.29s] === Round 10/10: fresh connection, first query = power status ===
+[  52.29s] TCP connect 172.16.205.161:23
+[  53.29s] TX '~00124 1'       (power status (first after connect))
+[  55.30s]    RX 'OK0'
+[  55.30s] TX '~00124 1'       (power status (second))
+[  55.31s]    RX 'OK0'
+[  55.31s] TCP closed
+
+================ CONNECT-PROBE SUMMARY ================
+   10 x  first='OK0' second='OK0'
+
+Anything other than first='Ok0' (in standby) means the first query after a new
+connection is unreliable - which is what lets the HA integration send further
+queries in standby after a restart and trigger the firmware bug.

@@ -1,0 +1,5 @@
+[18:19:13] GATE power=b'OK1\r'
+[18:19:14] HEALTH pre: power=b'OK1\r' fw=b'OKC24M12S34\r' ip=b'Ok172_016_205_161\r' -> OK
+[18:19:24] P1 #9 ip -> b'NOREPLY'
+[18:19:24] HEALTH after P1 abnormal: ERROR [Errno 32] Broken pipe -> ABNORMAL
+[18:19:24] STOPPING at first abnormality
