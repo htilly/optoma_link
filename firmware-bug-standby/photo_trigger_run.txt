@@ -1,0 +1,7 @@
+[18:41:21.336] armed - burst starts in 20 s
+[18:41:41.387] GATE power=b'OK1\r'
+[18:41:41.387] BURST START
+[18:41:50.526]   #10 b'Ok172_016_205_161\r' 0.91s
+[18:41:59.663]   #20 b'Ok172_016_205_161\r' 0.92s
+[18:42:06.052] TRIGGERED at query #27: b'Ok172_016_205_161'  <-- text should be on screen now for 1-2 s
+[18:42:06.053] DONE

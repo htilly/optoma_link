@@ -34,6 +34,7 @@ Setup: projector on (`~00124 1` returns `OK1`), one TCP connection to port 23, r
 | `bisect.py`, 0.1 s (18:26) | Reply no. 50 truncated. One power query got no reply, LAN back after 23 s. |
 | `bisect.py`, 0 s (18:27) | Reply no. 37 truncated. One power query got no reply. |
 | `groups.py`: 10 queries per new connection, 30 s between groups (18:28-18:33) | Groups 1-7 (70 queries) normal. Group 8, first query (no. 71 in total): truncated reply. A power query at 18:37:32 got no reply (timeout), at 18:38:39 `OK1`. |
+| `photo_trigger.py` (18:42), then `photo_trigger2.py` (18:44) | `photo_trigger.py`: truncated reply at query no. 27 (25 s after start). `photo_trigger2.py`: its **gate** (one power query, `~00124 1`) timed out at 18:44:38, the on-screen message appeared at that moment, and nothing else was sent. |
 
 What the data supports:
 
@@ -86,6 +87,7 @@ Logs from the session are in this folder:
 - `burst_repro.txt`: burst run B (with millisecond timestamps)
 - `bisect_run.txt`: five phases with different pauses (script: `bisect.py`)
 - `groups_run.txt`: 10-query groups with 30 s pauses (script: `groups.py`)
+- `photo_trigger_run.txt`, `photo_trigger2_run.txt`: runs timed for photographing the screen (scripts: `photo_trigger.py`, `photo_trigger2.py`)
 
 Excerpt, burst run B:
 
