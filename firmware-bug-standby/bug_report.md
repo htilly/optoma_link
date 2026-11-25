@@ -42,7 +42,7 @@ What the data supports:
 - Reply time grows during a series: about 0.11 s at first, 0.4-0.9 s after the first failures. The effective query rate in the fast phases was bounded by this reply time (about 1 query/s), so we could not test faster tempos.
 - The on-screen message **"ProjectorService: Central Service has been disconnected, probably crash or something!"** was seen on several of these occasions. It is visible for only 1-2 s, so not every event was observed. A truncated reply on its own is not proof of the message.
 
-The on-screen message is shown in the attached photo.
+The on-screen message is shown in the attached photo (`crash_message_photo.jpg`; the serial number line is blacked out).
 
 Expected: the query should answer every time, or return `F`. It must not take down `ProjectorService`.
 
@@ -76,6 +76,7 @@ What we can and cannot say:
 
 Logs from the session are in this folder:
 
+- `crash_message_photo.jpg`: photo of the on-screen message (serial number line blacked out)
 - `probe.txt`: power-only probe, 10 rounds
 - `trigger_122.txt`: standby, `~00122 1`
 - `trigger_555.txt`: standby, `~00555 1`
