@@ -7,12 +7,16 @@ Two findings on an Optoma UHZ68LV, using only the documented RS232-by-Telnet ASC
 1. **Reproduced (projector on): repeated IP-address queries `~0087 3` crash `ProjectorService`.** Sending the query repeatedly makes replies slow, then truncated, then absent. The projector shows the on-screen message **"ProjectorService: Central Service has been disconnected, probably crash or something!"** This happened repeatedly: about nine abnormal events in a 20-minute session. It is not limited to older firmware: the unit tested has DDP C24 / MCU M12 / Scalar S34 (see Environment).
 2. **Partly observed (standby): LAN control behaves oddly after a non-power query, but Power On over LAN still worked.** In standby with Power Mode = Communication, a firmware query (`~00122 1`) was answered, while a MAC query (`~00555 1`) got no reply. In both runs, a first query on a *new* TCP connection got no reply within 5 s. `~0000 1` (Power On) was nevertheless acknowledged and the projector powered on by itself, without the IR remote. **We did not reproduce a state where only the IR remote or keypad can recover LAN control.**
 
+![On-screen message: "ProjectorService: Central Service has been disconnected, probably crash or something!" (serial number line blacked out)](crash_message_photo.jpg)
+
+*The on-screen message shown when ProjectorService crashes. It stays up for only 1–2 seconds.*
+
 ## Environment
 
 | | |
 |---|---|
 | Model | Optoma UHZ68LV |
-| Firmware (reply to `~00122 1`) | `C24M12S34`. Read from the Menu > Information screen: DDP: ____ / MCU: ____ / Scalar: ____ / LAN: ____ |
+| Firmware (reply to `~00122 1`) | `C24M12S34`. Menu > Information: DDP C24 / MCU M12 / Scalar S34. LAN firmware: not read (`~00357 1` returns `F`). |
 | Region (service menu) | non-EMEA |
 | Power Mode (Standby) | Communication |
 | Connection | LAN, RS232 by Telnet, TCP port 23, projector ID 00 |
