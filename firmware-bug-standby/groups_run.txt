@@ -1,0 +1,13 @@
+[18:28:34.701] GATE power=b'OK1\r'
+[18:28:43.550] GROUP 1: 10/10 normal; reply avg 0.88s; total IP queries so far 10
+[18:29:21.919] GROUP 2: 10/10 normal; reply avg 0.84s; total IP queries so far 20
+[18:30:00.268] GROUP 3: 10/10 normal; reply avg 0.83s; total IP queries so far 30
+[18:30:38.634] GROUP 4: 10/10 normal; reply avg 0.84s; total IP queries so far 40
+[18:31:16.969] GROUP 5: 10/10 normal; reply avg 0.83s; total IP queries so far 50
+[18:31:55.326] GROUP 6: 10/10 normal; reply avg 0.83s; total IP queries so far 60
+[18:32:33.695] GROUP 7: 10/10 normal; reply avg 0.84s; total IP queries so far 70
+[18:33:03.872] GROUP 8: ABNORMAL at query 1: b'Ok172_016_205_161'; reply avg 0.17s; total IP queries so far 71
+[18:33:03.873] STOP at first abnormality
+[18:33:03.873] DONE
+[18:37:32] after-check power=b'ERR timed out'
+[18:38:39] after-check 2 power=b'OK1\r'

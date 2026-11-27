@@ -1,0 +1,46 @@
+[18:22:24.532] GATE
+[18:22:24.573] power=b'OK1\r'
+[18:22:24.573] === PHASE delay=1.0s between queries, max 80 queries, one connection ===
+[18:22:41.514]   #10 b'Ok172_016_205_161\r' 0.80s
+[18:22:59.841]   #20 b'Ok172_016_205_161\r' 0.82s
+[18:23:18.149]   #30 b'Ok172_016_205_161\r' 0.83s
+[18:23:36.437]   #40 b'Ok172_016_205_161\r' 0.81s
+[18:23:43.747]   #44 b'Ok172_016_205_161' 0.82s
+[18:23:43.747] PHASE delay=1.0: ABNORMAL at query #44; reply time min/avg/max = 0.51/0.82/0.88s
+[18:23:48.778]   recover-check power=b'OK1\r' (5s)
+[18:23:58.782]   recovery: 15s
+[18:23:58.782] === PHASE delay=0.5s between queries, max 80 queries, one connection ===
+[18:24:07.487]   #10 b'Ok172_016_205_161\r' 0.40s
+[18:24:12.058]   #15 b'Ok172_016_205_161' 0.42s
+[18:24:12.058] PHASE delay=0.5: ABNORMAL at query #15; reply time min/avg/max = 0.39/0.41/0.48s
+[18:24:20.071]   recover-check power=b'NOREPLY' (8s)
+[18:24:25.104]   recover-check power=b'OK1\r' (13s)
+[18:24:35.109]   recovery: 23s
+[18:24:35.110] === PHASE delay=0.25s between queries, max 80 queries, one connection ===
+[18:24:44.055]   #10 b'Ok172_016_205_161\r' 0.67s
+[18:24:53.173]   #20 b'Ok172_016_205_161\r' 0.64s
+[18:25:02.323]   #30 b'Ok172_016_205_161\r' 0.66s
+[18:25:05.057]   #33 b'Ok172_016_205_161' 0.67s
+[18:25:05.057] PHASE delay=0.25: ABNORMAL at query #33; reply time min/avg/max = 0.64/0.66/0.70s
+[18:25:10.089]   recover-check power=b'OK1\r' (5s)
+[18:25:20.094]   recovery: 15s
+[18:25:20.094] === PHASE delay=0.1s between queries, max 80 queries, one connection ===
+[18:25:28.847]   #10 b'Ok172_016_205_161\r' 0.82s
+[18:25:37.985]   #20 b'Ok172_016_205_161\r' 0.82s
+[18:25:47.161]   #30 b'Ok172_016_205_161\r' 0.82s
+[18:25:56.329]   #40 b'Ok172_016_205_161\r' 0.81s
+[18:26:05.491]   #50 b'Ok172_016_205_161' 0.77s
+[18:26:05.492] PHASE delay=0.1: ABNORMAL at query #50; reply time min/avg/max = 0.51/0.81/0.86s
+[18:26:13.502]   recover-check power=b'NOREPLY' (8s)
+[18:26:18.537]   recover-check power=b'OK1\r' (13s)
+[18:26:28.538]   recovery: 23s
+[18:26:28.539] === PHASE delay=0.0s between queries, max 80 queries, one connection ===
+[18:26:37.456]   #10 b'Ok172_016_205_161\r' 0.92s
+[18:26:46.587]   #20 b'Ok172_016_205_161\r' 0.91s
+[18:26:55.716]   #30 b'Ok172_016_205_161\r' 0.92s
+[18:27:02.106]   #37 b'Ok172_016_205_161' 0.92s
+[18:27:02.106] PHASE delay=0.0: ABNORMAL at query #37; reply time min/avg/max = 0.69/0.91/0.92s
+[18:27:10.117]   recover-check power=b'NOREPLY' (8s)
+[18:27:15.151]   recover-check power=b'OK1\r' (13s)
+[18:27:25.153]   recovery: 23s
+[18:27:25.153] DONE

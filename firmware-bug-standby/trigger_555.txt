@@ -1,0 +1,45 @@
+[   0.02s] === Step 1: baseline - power-status query in standby (expect 'Ok0') ===
+[   0.02s] TCP connect 172.16.205.161:23
+[   1.02s] TX '~00124 1'       (power status)
+[   1.03s]    RX 'OK0'
+[   2.04s] TX '~00124 1'       (power status)
+[   2.05s]    RX 'OK0'
+[   3.05s] TX '~00124 1'       (power status)
+[   3.06s]    RX 'OK0'
+[   4.07s] === Step 2: one non-power query in standby: 555 1 ===
+[   4.07s] TX '~00555 1'       (non-power query)
+[   9.07s]    -- NO REPLY within 5s
+[  10.07s] === Step 3: power-status query again, same connection ===
+[  10.07s] TX '~00124 1'       (power status)
+[  10.08s]    RX 'F'
+[  11.08s] TX '~00124 1'       (power status)
+[  11.08s]    RX 'OK0'
+[  12.09s] TX '~00124 1'       (power status)
+[  12.09s]    RX 'OK0'
+[  13.09s] === Step 4: power-status query on a NEW TCP connection ===
+[  13.09s] TCP closed
+[  13.09s] TCP connect 172.16.205.161:23
+[  14.10s] TX '~00124 1'       (power status)
+[  19.10s]    -- NO REPLY within 5s
+[  19.10s] === Step 5: power ON command over LAN ===
+[  19.10s] TX '~0000 1'        (power on)
+[  19.11s]    RX 'OK0'
+[  19.11s] Waiting 20 s for the projector to react ...
+[  39.12s] TX '~00124 1'       (power status)
+[  39.12s]    RX 'P'
+[  39.12s]    RX (status push) 'INFO1'
+[  39.12s] TCP closed
+
+================ SUMMARY ================
+  baseline_0         'OK0'
+  baseline_1         'OK0'
+  baseline_2         'OK0'
+  trigger            None
+  after_0            'F'
+  after_1            'OK0'
+  after_2            'OK0'
+  after_reconnect    None
+  power_on           'OK0'
+  power_after_on     'P'
+
+NOT REPRODUCED with this query. Try another, e.g. --query '555 1' (MAC) or '353 1'.
